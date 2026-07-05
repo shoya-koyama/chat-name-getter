@@ -10,7 +10,6 @@ function displayResults(names) {
     return;
   }
   
-  // 重複を排除
   const uniqueNames = [...new Set(names.map(n => n.dataName))];
   
   let html = '';
@@ -40,14 +39,32 @@ function fetchNames() {
       return;
     }
     
+    // タイムアウト付きでメッセージ送信
+    const timeoutId = setTimeout(() => {
+      document.getElementById('results').innerHTML = '<div class="empty">Google Chat ページが応答しません。ページをリロードしてください</div>';
+    }, 5000);
+    
     chrome.tabs.sendMessage(tabs[0].id, { action: 'getNames' }, (response) => {
+      clearTimeout(timeoutId);
+      
       if (chrome.runtime.lastError) {
-        document.getElementById('results').innerHTML = '<div class="empty">Google Chat ページを開いてください</div>';
+        let errorMsg = 'Google Chat ページを開いてください';
+        
+        // エラーの詳細に応じてメッセージを切り替え
+        if (chrome.runtime.lastError.message.includes('Could not establish connection')) {
+          errorMsg = 'コンテンツスクリプトがロードされていません。ページをリロードしてください';
+        }
+        
+        document.getElementById('results').innerHTML = `<div class="empty">${escapeHtml(errorMsg)}</div>`;
         return;
       }
       
       if (response && response.names) {
         displayResults(response.names);
+      } else if (response && response.error) {
+        document.getElementById('results').innerHTML = `<div class="empty">エラー: ${escapeHtml(response.error)}</div>`;
+      } else {
+        document.getElementById('results').innerHTML = '<div class="empty">予期しないエラーが発生しました</div>';
       }
     });
   });
@@ -66,16 +83,36 @@ function copyToClipboard() {
     .map(item => item.textContent)
     .join('\n');
   
-  navigator.clipboard.writeText(text).then(() => {
-    alert('クリップボードにコピーしました！');
-  }).catch(err => {
-    console.error('コピーに失敗しました:', err);
-  });
+  navigator.clipboard.writeText(text)
+    .then(() => {
+      alert('クリップボードにコピーしました！');
+    })
+    .catch(err => {
+      console.error('コピーに失敗しました:', err);
+      alert('クリップボードへのコピーに失敗しました');
+    });
 }
 
-// イベントリスナー
-document.getElementById('refreshBtn').addEventListener('click', fetchNames);
-document.getElementById('copyBtn').addEventListener('click', copyToClipboard);
+// イベントリスナーを設定
+function setupEventListeners() {
+  const refreshBtn = document.getElementById('refreshBtn');
+  const copyBtn = document.getElementById('copyBtn');
+  
+  if (refreshBtn) {
+    refreshBtn.addEventListener('click', fetchNames);
+  }
+  if (copyBtn) {
+    copyBtn.addEventListener('click', copyToClipboard);
+  }
+}
 
 // ポップアップを開いたときに自動取得
-fetchNames();
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => {
+    setupEventListeners();
+    fetchNames();
+  });
+} else {
+  setupEventListeners();
+  fetchNames();
+}
