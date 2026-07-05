@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * {
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    }
+    body {
+      width: 400px;
+      padding: 0;
+      margin: 0;
+    }
+    .container {
+      padding: 16px;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      border-bottom: 1px solid #e0e0e0;
+      padding-bottom: 12px;
+    }
+    h2 {
+      margin: 0;
+      font-size: 16px;
+      color: #202124;
+    }
+    button {
+      padding: 6px 12px;
+      background-color: #f3f3f3;
+      border: 1px solid #dadce0;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    button:hover {
+      background-color: #f8f9fa;
+    }
+    #results {
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    .item {
+      padding: 12px;
+      border: 1px solid #e8eaed;
+      border-radius: 4px;
+      margin-bottom: 8px;
+      background-color: #f9fafb;
+      word-break: break-all;
+    }
+    .item:hover {
+      background-color: #f3f3f3;
+    }
+    .item-label {
+      font-size: 11px;
+      color: #80868b;
+      margin-bottom: 4px;
+    }
+    .item-value {
+      font-size: 13px;
+      color: #202124;
+      font-weight: 500;
+    }
+    .empty {
+      text-align: center;
+      padding: 24px 16px;
+      color: #80868b;
+      font-size: 12px;
+    }
+    .status {
+      font-size: 12px;
+      color: #1f73e6;
+      margin-top: 8px;
+      text-align: center;
+    }
+    .copy-btn {
+      padding: 4px 8px;
+      margin-left: 8px;
+      font-size: 11px;
+      background-color: #1f73e6;
+      color: white;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+    .copy-btn:hover {
+      background-color: #1765cc;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h2>Google Chat Names</h2>
+      <div>
+        <button id="refreshBtn">更新</button>
+        <button id="copyBtn">コピー</button>
+      </div>
+    </div>
+    <div id="results" class="empty">読み込み中...</div>
+    <div class="status" id="status"></div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

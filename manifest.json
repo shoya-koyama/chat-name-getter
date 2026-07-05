@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "Google Chat Name Getter",
+  "version": "1.0.0",
+  "description": "Google Chat のメッセージから span class=\"nzVtF\" の data-name 属性を抽出します",
+  "permissions": ["scripting", "activeTab"],
+  "host_permissions": [
+    "https://chat.google.com/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Google Chat Name Getter"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://chat.google.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_end"
+    }
+  ]
+}
