@@ -9,7 +9,7 @@ const CACHE_DURATION = 1000; // 1秒
 // イベントリスナーが初期化済みかどうかのフラグ
 let isListenerInitialized = false;
 
-// 過去10件のメッセージから data-name 属性を取得する関数
+// 過去20件のメッセージから data-name 属性を取得する関数
 function getMessageNames() {
   // 現在の時刻を取得
   const now = Date.now();
@@ -28,8 +28,8 @@ function getMessageNames() {
   try {
     // span class="nzVtF" 内の span[data-name] 要素をすべて取得
     const spans = document.querySelectorAll('span.nzVtF span[data-name]');
-    // 最後の10個の要素のみを取得
-    const recentSpans = Array.from(spans).slice(-10);
+    // 最後の20個の要素のみを取得
+    const recentSpans = Array.from(spans).slice(-20);
     
     // 各要素に対してループ処理
     recentSpans.forEach((span, index) => {
@@ -93,7 +93,7 @@ function getMentionsInEditor() {
   return mentions;
 }
 
-// メンションが過去10件のメッセージに含まれているか確認する関数
+// メンションが直近20件のメッセージに含まれているか確認する関数
 function checkMentionsAgainstHistory() {
   // 入力欄内のメンション名を取得
   const mentionsInEditor = getMentionsInEditor();
@@ -103,20 +103,42 @@ function checkMentionsAgainstHistory() {
   // メッセージの data-name 値のみを抽出
   const existingNames = messageNames.map(m => m.dataName);
   
-  // メンションされたが過去10件に見つからない名前をフィルタ
-  const notFoundMentions = mentionsInEditor.filter(
-    // 既存の名前に含まれていない場合のみ抽出
-    mention => !existingNames.includes(mention)
-  );
+  // メンション名以外の名前で、かつ同じ苗字の名前を検出
+  const sameSurnameMatches = [];
+  
+  // 各メンション名に対してループ
+  mentionsInEditor.forEach(mention => {
+    // メンション名以外の名前をフィルタ
+    const otherNames = existingNames.filter(name => name !== mention);
+    
+    // メンション名の先頭2文字を取得
+    const mentionSurname = mention.substring(0, 2);
+    
+    // 先頭2文字が同じ名前を検出
+    const matches = otherNames.filter(name => {
+      // 名前の先頭2文字を取得
+      const nameSurname = name.substring(0, 2);
+      // 先頭2文字が一致するか確認
+      return nameSurname === mentionSurname;
+    });
+    
+    // マッチした名前がある場合、記録
+    if (matches.length > 0) {
+      sameSurnameMatches.push({
+        mention: mention,
+        matches: matches
+      });
+    }
+  });
   
   // 検証結果をオブジェクトで返す
   return {
     // 入力欄内のメンション名
     mentionsInEditor: mentionsInEditor,
-    // 過去10件に存在する名前
+    // 過去20件に存在する名前
     existingNames: existingNames,
-    // 見つからないメンション名
-    notFoundMentions: notFoundMentions
+    // 同じ苗字の名前
+    sameSurnameMatches: sameSurnameMatches
   };
 }
 
@@ -167,20 +189,26 @@ function validateBeforeSend() {
   const check = checkMentionsAgainstHistory();
   // デバッグ: メンション検証結果をログ出力
   // console.log('[validateBeforeSend] Mentions in editor:', check.mentionsInEditor);
-  // console.log('[validateBeforeSend] Not found mentions:', check.notFoundMentions);
+  // console.log('[validateBeforeSend] Same surname matches:', check.sameSurnameMatches);
   
-  // 見つからないメンションが存在する場合
-  if (check.notFoundMentions.length > 0) {
+  // 同じ苗字のマッチが存在する場合
+  if (check.sameSurnameMatches.length > 0) {
     // 確認ダイアログ用のメッセージを作成
-    const message = `以下のメンションが過去10件のメッセージに見つかりません。本当に送信しますか？\n\n見つからない名前:\n${check.notFoundMentions.join('\n')}`;
+    let message = `以下のメンションと同じ苗字の名前が直近20件のメッセージに見つかりました。本当に送信しますか？\n\n`;
+    
+    // 各マッチ情報を追加
+    check.sameSurnameMatches.forEach(item => {
+      message += `${item.mention} → 見つかった名前: ${item.matches.join(', ')}\n`;
+    });
+    
     // デバッグ: ダイアログを表示することをログ出力
     // console.log('[validateBeforeSend] Showing confirm dialog');
     // ユーザーに確認を取り、結果を返す
     return confirm(message);
   }
   
-  // 見つからないメンションがない場合は true を返す
-  // console.log('[validateBeforeSend] No unfound mentions, allowing send');
+  // 同じ苗字のマッチがない場合は true を返す
+  // console.log('[validateBeforeSend] No same surname matches, allowing send');
   return true;
 }
 
